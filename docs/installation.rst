@@ -1,0 +1,21 @@
+Installation
+------------
+
+You can install Flask-Orator in 2 different ways:
+
+* The easier and more straightforward is to use pip
+
+.. code-block:: bash
+
+    pip install flask-orator
+
+* Install from source using the official repository (https://github.com/sdispater/flask-orator)
+
+.. note::
+
+    The different dbapi packages are not part of the package dependencies,
+    so you must install them in order to connect to corresponding databases:
+
+    * PostgreSQL: ``pyscopg2``
+    * MySQL: ``PyMySQL`` or ``mysqlclient``
+    * SQLite: The ``sqlite3`` module is bundled with Python by default
