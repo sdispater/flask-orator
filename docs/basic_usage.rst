@@ -10,7 +10,7 @@ A Minimal Application
 .. note::
 
     This example application will not go into details as to how the ORM works.
-    You can refer to the `Orator documentation <http://orator.readthedocs.org>`_ for more information.
+    You can refer to the `Orator documentation <http://orator-orm.com/docs>`_ for more information.
 
 
 Setting up Flask-Orator for a single Flask application is quite simple.
@@ -137,7 +137,7 @@ You can now retrieve them easily from the database:
 
 
 Relationships
--------------
+=============
 
 Setting up relationships between tables is a breeze.
 Let's create a ``Post`` model with the ``User`` model as a parent:
@@ -241,3 +241,44 @@ But, if we need to retrieve a more fine-grained portion of posts we can actually
 
     user.posts().where('title', 'like', '%admin%').get()
     user.posts().first()
+
+
+Pagination
+==========
+
+Flask-Orator supports pagination:
+
+.. code-block:: python
+
+    users = User.paginate(15)
+
+This will retrieve ``15`` users. The current page is determined by default by the ``?page`` query string
+parameter of the request.
+
+This behavior can be modified if needed, either by explicitely specifying the current page:
+
+.. code-block:: python
+
+    users = User.paginate(15, request.args['index'])
+
+or by changing the default ``Paginator`` current page resolver:
+
+.. code-block:: python
+
+    from flask import request
+    from orator import Paginator
+
+    def current_page_resolver():
+        return request.args.get('index', 1)
+
+    Paginator.current_page_resolver(current_page_resolver)
+
+
+What's more?
+============
+
+Like said in introduction Flask-Orator is a wrapper around `Orator <http://orator-orm.com>`_ to integrate it
+more easily with Flask applications. So, basically, everything you can do with Orator
+is also possible with Flask-Orator.
+
+Referer to the `Orator documentation <http://orator-orm/docs/>`_ to see the features available.
