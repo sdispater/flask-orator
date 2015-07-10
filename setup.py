@@ -32,7 +32,8 @@ setup(
     packages=['flask_orator'],
     install_requires=[
         'Flask>=0.10'
-        'orator'
+        'orator',
+        'cleo'
     ],
     tests_require=['pytest', 'mock'],
     test_suite='nose.collector',
