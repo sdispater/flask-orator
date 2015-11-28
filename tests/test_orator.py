@@ -1,20 +1,31 @@
 # -*- coding: utf-8 -*-
 
+import sys
+import os
 import json
-import traceback
+import tempfile
+import uuid
 from unittest import TestCase
 from flask import Flask, jsonify, request
 from flask_orator import Orator, jsonify
+from sqlite3 import ProgrammingError
+from orator.support.collection import Collection
+
+
+PY2 = sys.version_info[0] == 2
 
 
 class FlaskOratorTestCase(TestCase):
 
     def setUp(self):
+        dbname = '%s.db' % str(uuid.uuid4())
+        self.dbpath = os.path.join(tempfile.gettempdir(), dbname)
+
         app = Flask(__name__)
         app.config['ORATOR_DATABASES'] = {
             'test': {
                 'driver': 'sqlite',
-                'database': ':memory:'
+                'database': self.dbpath
             }
         }
 
@@ -27,12 +38,7 @@ class FlaskOratorTestCase(TestCase):
 
         @app.route('/')
         def index():
-            try:
-                return jsonify(self.User.order_by('id').paginate(5))
-            except Exception as e:
-                print(e)
-                print(traceback.format_exc())
-                raise
+            return jsonify(self.User.order_by('id').paginate(5))
 
         @app.route('/users', methods=['POST'])
         def create():
@@ -42,6 +48,9 @@ class FlaskOratorTestCase(TestCase):
             return jsonify(user)
 
         self.init_tables()
+
+    def tearDown(self):
+        os.remove(self.dbpath)
 
     def init_tables(self):
         with self.schema().create('users') as table:
@@ -76,6 +85,18 @@ class FlaskOratorTestCase(TestCase):
 
     def schema(self):
         return self.connection().get_schema_builder()
+
+    def assertRaisesRegex(self, expected_exception, expected_regex,
+                          callable_obj=None, *args, **kwargs):
+        if PY2:
+            return self.assertRaisesRegexp(
+                expected_exception, expected_regex,
+                callable_obj, *args, **kwargs)
+
+        return super(FlaskOratorTestCase, self).assertRaisesRegex(
+            expected_exception, expected_regex,
+            callable_obj, *args, **kwargs
+        )
 
 
 class BasicAppTestCase(FlaskOratorTestCase):
@@ -146,3 +167,39 @@ class PaginatorTestCase(FlaskOratorTestCase):
         )
 
         self.assertEqual(0, len(users))
+
+
+class ConsistenceTestCase(FlaskOratorTestCase):
+
+    def test_handlers(self):
+        connection = self.db.connection().get_connection()
+
+        c = self.app.test_client()
+
+        self.get(c, '/')
+
+        self.assertRaisesRegex(ProgrammingError, 'Cannot operate on a closed database.', connection.commit)
+
+        self.assertIsNone(self.db.connection().get_connection())
+
+    def test_behaves_like_manager(self):
+        @self.app.route('/users')
+        def users():
+            try:
+                users = jsonify(Collection(self.db.table('users').get()).map(lambda x: dict(x.items())))
+            except Exception as e:
+                print(e)
+                raise
+
+            return users
+
+        c = self.app.test_client()
+
+        for i in range(10):
+            self.post(c, '/users',
+                      name='user %s' % i,
+                      email='foo%s@bar.com' % i)
+
+        users = json.loads(self.get(c, '/users').data.decode())
+
+        self.assertEqual(10, len(users))

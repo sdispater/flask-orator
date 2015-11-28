@@ -2,7 +2,7 @@
 
 from flask import current_app, request, jsonify as base_jsonify, Response
 from orator import DatabaseManager, Model as BaseModel
-from orator.pagination import Paginator, LengthAwarePaginator
+from orator.pagination import Paginator
 from orator.commands.migrations import (
     InstallCommand, MigrateCommand,
     MigrateMakeCommand, RollbackCommand,
@@ -18,13 +18,12 @@ except ImportError:
     import json
 
 
-class Orator(DatabaseManager):
+class Orator(object):
 
     def __init__(self, app=None):
         self.Model = BaseModel
         self.cli = None
-
-        super(Orator, self).__init__({})
+        self._db = None
 
         if app is not None:
             self.init_app(app)
@@ -33,9 +32,16 @@ class Orator(DatabaseManager):
         if 'ORATOR_DATABASES' not in app.config:
             raise RuntimeError('Missing "ORATOR_DATABASES" configuration')
 
+        # Register request hooks
+        self.register_handlers(app)
+
+        # Getting config databases
         self._config = app.config['ORATOR_DATABASES']
 
-        self.Model.set_connection_resolver(self)
+        # Initializing database manager
+        self._db = DatabaseManager(self._config)
+
+        self.Model.set_connection_resolver(self._db)
 
         # Setting current page resolver
         def current_page_resolver():
@@ -43,9 +49,10 @@ class Orator(DatabaseManager):
 
         Paginator.current_page_resolver(current_page_resolver)
 
-        self.init_commands(app)
+        # Setting commands
+        self.init_commands()
 
-    def init_commands(self, app):
+    def init_commands(self):
         self.cli = Application(orator_application.get_name(),
                                orator_application.get_version())
         
@@ -55,6 +62,16 @@ class Orator(DatabaseManager):
         self.cli.add(RollbackCommand(self))
         self.cli.add(StatusCommand(self))
         self.cli.add(ResetCommand(self))
+
+    def register_handlers(self, app):
+        teardown = app.teardown_appcontext
+
+        @teardown
+        def disconnect(_):
+            return self._db.disconnect()
+
+    def __getattr__(self, item):
+        return getattr(self._db, item)
 
 
 def jsonify(obj, **kwargs):
