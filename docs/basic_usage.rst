@@ -17,7 +17,7 @@ Setting up Flask-Orator for a single Flask application is quite simple.
 Create your application, load its configuration and then create an ``Orator``
 object.
 
-The ``Orator`` object is actually a modified ``DatabaseManager`` instance set up
+The ``Orator`` object behaves like a ``DatabaseManager`` instance set up
 to work flawlessly with Flask.
 
 

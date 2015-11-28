@@ -27,11 +27,11 @@ setup(
     long_description=open('README.rst').read(),
     author='Sébastien Eustace',
     author_email='sebastien.eustace@gmail.com',
-    url='https://github.com/sdispater/orator',
-    download_url='https://github.com/sdispater/orator/archive/%s.tar.gz' % __version__,
+    url='https://github.com/sdispater/flask-orator',
+    download_url='https://github.com/sdispater/flask-orator/archive/%s.tar.gz' % __version__,
     packages=['flask_orator'],
     install_requires=[
-        'Flask>=0.10'
+        'Flask>=0.10',
         'orator',
         'cleo'
     ],
