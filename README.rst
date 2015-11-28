@@ -2,7 +2,7 @@ Flask-Orator
 ############
 
 .. image:: https://travis-ci.org/sdispater/flask-orator.png
-   :alt: Orator Build status
+   :alt: Flask Orator Build status
    :target: https://travis-ci.org/sdispater/flask-orator
 
 Flask-Orator adds `Orator ORM <https://github.com/sdispater/orator>`_ support to Flask applications.
@@ -10,8 +10,6 @@ Flask-Orator adds `Orator ORM <https://github.com/sdispater/orator>`_ support to
 
 Resources
 =========
-
-You can install Orator in 2 different ways:
 
 * `Documentation <http://flask-orator.readthedocs.org>`_
 * `Issue Tracker <https://github.com/sdispater/flask-orator/issues>`_
