@@ -179,7 +179,7 @@ And we modify the generated file to look like this:
     from orator.migrations import Migration
 
 
-    class CreateTableUsers(Migration):
+    class CreatePostsTable(Migration):
 
         def up(self):
             """
@@ -189,7 +189,7 @@ And we modify the generated file to look like this:
                 table.increments('id')
                 table.string('title')
                 table.text('content')
-                table.integer('user_id')
+                table.integer('user_id', unsigned=True)
                 table.timestamps()
 
                 table.foreign('user_id').references('id').on('users')
