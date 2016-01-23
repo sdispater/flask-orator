@@ -3,12 +3,8 @@
 from flask import current_app, request, jsonify as base_jsonify, Response
 from orator import DatabaseManager, Model as BaseModel
 from orator.pagination import Paginator
-from orator.commands.migrations import (
-    InstallCommand, MigrateCommand,
-    MigrateMakeCommand, RollbackCommand,
-    StatusCommand, ResetCommand
-)
 from orator.commands.application import application as orator_application
+from orator.commands.command import Command
 from cleo import Application
 
 
@@ -20,10 +16,11 @@ except ImportError:
 
 class Orator(object):
 
-    def __init__(self, app=None):
+    def __init__(self, app=None, manager_class=DatabaseManager):
         self.Model = BaseModel
         self.cli = None
         self._db = None
+        self._manager_class = manager_class
 
         if app is not None:
             self.init_app(app)
@@ -39,29 +36,31 @@ class Orator(object):
         self._config = app.config['ORATOR_DATABASES']
 
         # Initializing database manager
-        self._db = DatabaseManager(self._config)
+        self._db = self._manager_class(self._config)
 
         self.Model.set_connection_resolver(self._db)
 
         # Setting current page resolver
-        def current_page_resolver():
-            return int(request.args.get('page', 1))
-
-        Paginator.current_page_resolver(current_page_resolver)
+        Paginator.current_page_resolver(self._current_page_resolver)
 
         # Setting commands
         self.init_commands()
 
+    def _current_page_resolver(self):
+        return int(request.args.get('page', 1))
+
     def init_commands(self):
-        self.cli = Application(orator_application.get_name(),
-                               orator_application.get_version())
-        
-        self.cli.add(InstallCommand(self))
-        self.cli.add(MigrateCommand(self))
-        self.cli.add(MigrateMakeCommand(self))
-        self.cli.add(RollbackCommand(self))
-        self.cli.add(StatusCommand(self))
-        self.cli.add(ResetCommand(self))
+        self.cli = Application(
+            orator_application.get_name(),
+            orator_application.get_version(),
+            complete=True
+        )
+
+        for command in orator_application.all().values():
+            if isinstance(command, Command):
+                self.cli.add(command.__class__(self._db))
+            else:
+                self.cli.add(command)
 
     def register_handlers(self, app):
         teardown = app.teardown_appcontext
