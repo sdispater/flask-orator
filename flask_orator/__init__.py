@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from flask import current_app, request, jsonify as base_jsonify, Response
+from flask import current_app, request, jsonify as base_jsonify, Response, make_response
 from orator import DatabaseManager, Model as BaseModel
 from orator.pagination import Paginator
 from orator.commands.application import application as orator_application
 from orator.commands.command import Command
+from orator.exceptions.orm import ModelNotFound
 from cleo import Application
 
 
@@ -63,11 +64,20 @@ class Orator(object):
                 self.cli.add(command)
 
     def register_handlers(self, app):
+        self._register_error_handlers(app)
+
         teardown = app.teardown_appcontext
 
         @teardown
         def disconnect(_):
             return self._db.disconnect()
+
+    def _register_error_handlers(self, app):
+        @app.errorhandler(ModelNotFound)
+        def model_not_found(error):
+            response = make_response(error.message, 404)
+
+            return response
 
     def __getattr__(self, item):
         return getattr(self._db, item)
