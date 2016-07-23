@@ -65,7 +65,7 @@ You first need to make a migration file to create the table:
 
 .. code-block:: text
 
-    python db.py migrations:make create_users_table --table users --create
+    python db.py make:migration create_users_table --table users --create
 
 This will add a file in the ``migrations`` folder named ``create_users_table``
 and prefixed by a timestamp:
@@ -105,7 +105,7 @@ Then, you can run the migration:
 
 .. code-block:: text
 
-    python db.py migrations:run
+    python db.py migrate
 
 Confirm and you database and table will be created.
 
@@ -170,7 +170,7 @@ and set up the relationship at database level:
 
 .. code-block:: text
 
-    python db.py migrations:make create_posts_table --table posts --create
+    python db.py make:migration create_posts_table --table posts --create
 
 And we modify the generated file to look like this:
 
@@ -204,7 +204,7 @@ Finally we run it:
 
 .. code-block:: text
 
-    python db.py migrations:run
+    python db.py migrate
 
 We can now instantiate some posts:
 
