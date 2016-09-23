@@ -65,7 +65,7 @@ You first need to make a migration file to create the table:
 
 .. code-block:: text
 
-    python db.py migrations:make create_users_table --table users --create
+     python db.py make:migration create_users_table --table users --create
 
 This will add a file in the ``migrations`` folder named ``create_users_table``
 and prefixed by a timestamp:
