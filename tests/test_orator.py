@@ -49,7 +49,7 @@ class FlaskOratorTestCase(TestCase):
 
         @app.route('/users/<user_id>', methods=['GET'])
         def show(user_id):
-            return jsonify(self.User.find_or_fail(user_id))
+            return self.User.find_or_fail(user_id)
 
         self.init_tables()
 
@@ -205,8 +205,7 @@ class ConsistenceTestCase(FlaskOratorTestCase):
         def users():
             try:
                 users = jsonify(Collection(self.db.table('users').get()).map(lambda x: dict(x.items())))
-            except Exception as e:
-                print(e)
+            except Exception:
                 raise
 
             return users

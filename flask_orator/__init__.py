@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from flask import current_app, request, jsonify as base_jsonify, Response, make_response
+from flask import current_app, request, jsonify as base_jsonify, make_response
 from orator import DatabaseManager, Model as BaseModel
 from orator.pagination import Paginator
 from orator.commands.application import application as orator_application
@@ -90,13 +90,10 @@ def jsonify(obj, **kwargs):
         indent = 2
 
     if hasattr(obj, 'to_json'):
-        response = Response(obj.to_json(indent=indent),
-                            mimetype='application/json',
-                            **kwargs)
-    elif isinstance(obj, list):
-        response = Response(json.dumps(obj, indent=indent),
-                            mimetype='application/json',
-                            **kwargs)
+        response = current_app.response_class(
+            obj.to_json(indent=indent),
+            mimetype='application/json'
+        )
     else:
         response = base_jsonify(obj, **kwargs)
 
