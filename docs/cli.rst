@@ -20,11 +20,11 @@ Migrations
 Creating Migrations
 -------------------
 
-To create a migration, you can use the ``migrations:make`` command on the CLI:
+To create a migration, you can use the ``make:migration`` command on the CLI:
 
 .. code-block:: bash
 
-    python db.py migrations:make create_users_table
+    python db.py make:migration create_users_table
 
 This will create a migration file that looks like this:
 
@@ -55,16 +55,16 @@ If you want the migrations to be stored in another folder, use the ``--path/-p``
 
 .. code-block:: bash
 
-    python db.py migrations:make create_users_table -p my/path/to/migrations
+    python db.py make:migration create_users_table -p my/path/to/migrations
 
 The ``--table`` and ``--create`` options can also be used to indicate the name of the table,
 and whether the migration will be creating a new table:
 
 .. code-block:: bash
 
-    python db.py migrations:make add_votes_to_users_table --table=users
+    python db.py make:migration add_votes_to_users_table --table=users
 
-    python db.py migrations:make create_users_table --table=users --create
+    python db.py make:migration create_users_table --table=users --create
 
 These commands would respectively create the following migrations:
 
@@ -114,11 +114,11 @@ These commands would respectively create the following migrations:
 Running Migrations
 ------------------
 
-To run all outstanding migrations, just use the ``migrations:run`` command:
+To run all outstanding migrations, just use the ``migrate`` command:
 
 .. code-block:: bash
 
-    python db.py migrations:run
+    python db.py migrate
 
 
 Rolling back migrations
@@ -129,14 +129,14 @@ Rollback the last migration operation
 
 .. code-block:: bash
 
-    python db.py migrations:rollback
+    python db.py migrate:rollback
 
 Rollback all migrations
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
-    python db.py migrations:reset
+    python db.py migrate:reset
 
 
 Getting migrations status
@@ -146,7 +146,7 @@ To see the status of the migrations, just use the ``migrations:status`` command:
 
 .. code-block:: bash
 
-    python db.py migrations:status
+    python db.py migrate:status
 
 This would output something like this:
 
