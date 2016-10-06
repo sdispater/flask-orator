@@ -955,3 +955,39 @@ tt.code .punctuation, code.code .punctuation { color: #878787 }
 tt.code .string, code.code .string { color: #59B6CF }
 tt.code .number, code.code .number { color: #E9767F }
 tt.code .integer, code.code .integer { color: #E9767F }
+
+
+/* Dark Orator */
+
+div[class^="highlight"] {
+    border: 0;
+    background: #152B39;
+    border-radius: 3px;
+}
+
+div[class^="highlight"] > pre {
+    border: 0;
+    color: #98AEC5;
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    border-radius: 3px;
+    padding: 4% 4%;
+    background: none;
+}
+
+.highlight .nn, .highlight .nc { color: #89C6BF; }
+.highlight .c, .highlight .c1 { color: #727995; font-style: normal; }
+.highlight .sd { color: #727995; font-style: normal; }
+.highlight .p, .highlight .o, code.code .operator { color: #687E95 }
+.highlight .n, code.code .name { color: #98AEC5 }
+.highlight .l { color: #98AEC5; }
+
+.note .last pre,
+.warning .last pre,
+.tip .last pre,
+.caution .last pre,
+.versionchanged .last pre,
+.versionadded .last pre {
+    padding-bottom: 4%;
+    margin-bottom: 0;
+}
