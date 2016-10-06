@@ -47,6 +47,10 @@ class FlaskOratorTestCase(TestCase):
 
             return jsonify(user)
 
+        @app.route('/users/<user_id>', methods=['GET'])
+        def show(user_id):
+            return self.User.find_or_fail(user_id)
+
         self.init_tables()
 
     def tearDown(self):
@@ -98,6 +102,12 @@ class FlaskOratorTestCase(TestCase):
             callable_obj, *args, **kwargs
         )
 
+    def assertRegex(self, *args, **kwargs):
+        if PY2:
+            return self.assertRegexpMatches(*args, **kwargs)
+        else:
+            return super(FlaskOratorTestCase, self).assertRegex(*args, **kwargs)
+
 
 class BasicAppTestCase(FlaskOratorTestCase):
 
@@ -118,6 +128,14 @@ class BasicAppTestCase(FlaskOratorTestCase):
         )
         self.assertEqual('foo', users[0]['name'])
         self.assertEqual('bar', users[1]['name'])
+
+    def test_model_not_found_returns_404(self):
+        c = self.app.test_client()
+
+        response = self.get(c, '/users/9999')
+
+        self.assertEqual(404, response.status_code)
+        self.assertRegex(str(response.data), 'No query results found for model \[User\]')
 
 
 class PaginatorTestCase(FlaskOratorTestCase):
@@ -187,8 +205,7 @@ class ConsistenceTestCase(FlaskOratorTestCase):
         def users():
             try:
                 users = jsonify(Collection(self.db.table('users').get()).map(lambda x: dict(x.items())))
-            except Exception as e:
-                print(e)
+            except Exception:
                 raise
 
             return users

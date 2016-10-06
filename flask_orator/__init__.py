@@ -1,14 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from flask import current_app, request, jsonify as base_jsonify, Response
+from flask import current_app, request, jsonify as base_jsonify, make_response
 from orator import DatabaseManager, Model as BaseModel
 from orator.pagination import Paginator
-from orator.commands.migrations import (
-    InstallCommand, MigrateCommand,
-    MigrateMakeCommand, RollbackCommand,
-    StatusCommand, ResetCommand
-)
 from orator.commands.application import application as orator_application
+from orator.commands.command import Command
+from orator.exceptions.orm import ModelNotFound
 from cleo import Application
 
 
@@ -20,10 +17,11 @@ except ImportError:
 
 class Orator(object):
 
-    def __init__(self, app=None):
+    def __init__(self, app=None, manager_class=DatabaseManager):
         self.Model = BaseModel
         self.cli = None
         self._db = None
+        self._manager_class = manager_class
 
         if app is not None:
             self.init_app(app)
@@ -39,36 +37,47 @@ class Orator(object):
         self._config = app.config['ORATOR_DATABASES']
 
         # Initializing database manager
-        self._db = DatabaseManager(self._config)
+        self._db = self._manager_class(self._config)
 
         self.Model.set_connection_resolver(self._db)
 
         # Setting current page resolver
-        def current_page_resolver():
-            return int(request.args.get('page', 1))
-
-        Paginator.current_page_resolver(current_page_resolver)
+        Paginator.current_page_resolver(self._current_page_resolver)
 
         # Setting commands
         self.init_commands()
 
+    def _current_page_resolver(self):
+        return int(request.args.get('page', 1))
+
     def init_commands(self):
-        self.cli = Application(orator_application.get_name(),
-                               orator_application.get_version())
-        
-        self.cli.add(InstallCommand(self))
-        self.cli.add(MigrateCommand(self))
-        self.cli.add(MigrateMakeCommand(self))
-        self.cli.add(RollbackCommand(self))
-        self.cli.add(StatusCommand(self))
-        self.cli.add(ResetCommand(self))
+        self.cli = Application(
+            orator_application.get_name(),
+            orator_application.get_version(),
+            complete=True
+        )
+
+        for command in orator_application.all().values():
+            if isinstance(command, Command):
+                self.cli.add(command.__class__(self._db))
+            else:
+                self.cli.add(command)
 
     def register_handlers(self, app):
+        self._register_error_handlers(app)
+
         teardown = app.teardown_appcontext
 
         @teardown
         def disconnect(_):
             return self._db.disconnect()
+
+    def _register_error_handlers(self, app):
+        @app.errorhandler(ModelNotFound)
+        def model_not_found(error):
+            response = make_response(error.message, 404)
+
+            return response
 
     def __getattr__(self, item):
         return getattr(self._db, item)
@@ -81,13 +90,10 @@ def jsonify(obj, **kwargs):
         indent = 2
 
     if hasattr(obj, 'to_json'):
-        response = Response(obj.to_json(indent=indent),
-                            mimetype='application/json',
-                            **kwargs)
-    elif isinstance(obj, list):
-        response = Response(json.dumps(obj, indent=indent),
-                            mimetype='application/json',
-                            **kwargs)
+        response = current_app.response_class(
+            obj.to_json(indent=indent),
+            mimetype='application/json'
+        )
     else:
         response = base_jsonify(obj, **kwargs)
 

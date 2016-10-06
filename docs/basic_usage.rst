@@ -65,7 +65,7 @@ You first need to make a migration file to create the table:
 
 .. code-block:: text
 
-     python db.py make:migration create_users_table --table users --create
+    python db.py make:migration create_users_table --table users --create
 
 This will add a file in the ``migrations`` folder named ``create_users_table``
 and prefixed by a timestamp:
@@ -105,9 +105,9 @@ Then, you can run the migration:
 
 .. code-block:: text
 
-    python db.py migrations:run
+    python db.py migrate
 
-Confirm and you database and table will be created.
+Confirm and you database and the table will be created.
 
 Once your database set up, you can create some users:
 
@@ -127,6 +127,18 @@ initiate them and save them later:
     # Do something else...
     admin.save()
 
+.. note::
+
+    Optionally you can use a transaction.
+
+    .. code-block:: python
+
+        from your_application import db, User
+
+        with db.transaction():
+            admin = User.create(name='admin', email='admin@example.com')
+            guest = Guest.create(name='guest', email='guest@example.com')
+
 You can now retrieve them easily from the database:
 
 .. code-block:: python
@@ -145,32 +157,37 @@ Let's create a ``Post`` model with the ``User`` model as a parent:
 
 .. code-block:: python
 
+    from orator.orm import belongs_to
+
 
     class Post(db.Model):
 
         __fillable__ = ['title', 'content']
 
-        @property
+        @belongs_to
         def user(self):
-            return self.belongs_to('users')
+            return User
 
 
 And we add the ``posts`` relationship to the ``User`` model:
 
 .. code-block:: python
 
+    from orator.orm import has_many
+
+
     class User(db.Model):
 
-        @property
+        @has_many
         def posts(self):
-            return self.has_many('posts')
+            return Post
 
 Before we can play with these models we need to create the ``posts`` table
 and set up the relationship at database level:
 
 .. code-block:: text
 
-    python db.py migrations:make create_posts_table --table posts --create
+    python db.py make:migration create_posts_table --table posts --create
 
 And we modify the generated file to look like this:
 
@@ -179,7 +196,7 @@ And we modify the generated file to look like this:
     from orator.migrations import Migration
 
 
-    class CreateTableUsers(Migration):
+    class CreatePostsTable(Migration):
 
         def up(self):
             """
@@ -189,7 +206,7 @@ And we modify the generated file to look like this:
                 table.increments('id')
                 table.string('title')
                 table.text('content')
-                table.integer('user_id')
+                table.integer('user_id', unsigned=True)
                 table.timestamps()
 
                 table.foreign('user_id').references('id').on('users')
@@ -204,7 +221,7 @@ Finally we run it:
 
 .. code-block:: text
 
-    python db.py migrations:run
+    python db.py migrate
 
 We can now instantiate some posts:
 
@@ -225,6 +242,17 @@ and associate them with users:
 
     # Associate from post.user relation
     guest_post.user().associate(guest)
+
+.. note::
+
+    You can also create the posts directly.
+
+    .. code-block:: python
+
+        admin.posts().create(
+            title='Admin Post',
+            description='This is a restricted post'
+        )
 
 Relationships properties are `dynamic properties <http://orator-orm.com/docs/orm.html#dynamic-properties>`_
 meaning that ``user.posts`` is the underlying collection of posts so we can do things like:
@@ -277,7 +305,7 @@ or by changing the default ``Paginator`` current page resolver:
 What's more?
 ============
 
-Like said in introduction Flask-Orator is a wrapper around `Orator <http://orator-orm.com>`_ to integrate it
+Like said in the introduction Flask-Orator is a wrapper around `Orator <http://orator-orm.com>`_ to integrate it
 more easily with Flask applications. So, basically, everything you can do with Orator
 is also possible with Flask-Orator.
 

@@ -17,6 +17,7 @@ nosetests.xml
 
 .DS_Store
 .idea/*
+.cache/*
 
 test.py
 app.py
